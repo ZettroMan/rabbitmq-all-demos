@@ -11,11 +11,12 @@ public class ExchangeReceiverApp {
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
 
-//        channel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.DIRECT);
+        channel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.TOPIC);
 
         String queueName = channel.queueDeclare().getQueue();
         System.out.println("My queue name: " + queueName);
-        channel.queueBind(queueName, EXCHANGE_NAME, "*.*.java");
+        channel.queueBind(queueName, EXCHANGE_NAME, "#.java");
+        channel.queueBind(queueName, EXCHANGE_NAME, "#.php");
 
         System.out.println(" [*] Waiting for messages");
 
