@@ -10,7 +10,7 @@ import static com.flamexander.rabbitmq.console.common.CommonDefs.*;
 
 
 public class ITBlogger {
-    private static final String EXCHANGE_NAME = "IT-Blog";
+    private static final String EXCHANGER_NAME = "IT-Blog";
 
     public static void main(String[] argv) throws Exception {
         Random random = new Random();
@@ -18,9 +18,9 @@ public class ITBlogger {
         factory.setHost("localhost");
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
-            channel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.TOPIC);
+            channel.exchangeDeclare(EXCHANGER_NAME, BuiltinExchangeType.TOPIC);
 
-            for (int i = 0; i < 100; i++) {
+            while (true) {
                 // determine a theme
                 int langIdx = random.nextInt(langs.length);
                 int themeIdx = random.nextInt(themes.length);
@@ -32,19 +32,25 @@ public class ITBlogger {
 
                 // build random article
                 StringBuilder stringBuilder = new StringBuilder();
-                for (int j = 0; j < random.nextInt(400); j++) {
-                    stringBuilder.append(alphabet.charAt(random.nextInt(alphabet.length())));
+                boolean upperCase = true;
+                int contentSize = 200 + random.nextInt(400);
+                for (int j = 0; j < contentSize; j++) {
+                    char character = alphabet.charAt(random.nextInt(alphabet.length()));
+                    if(upperCase && character!=' ' && character != '\n') {
+                        character = Character.toUpperCase(character);
+                        upperCase = false;
+                    }
+                    stringBuilder.append(character);
+                    if(character == '\n') {
+                        upperCase = true;
+                    }
                 }
-                channel.basicPublish(EXCHANGE_NAME, comboTheme.toString(), null, SerializationUtils.serialize(new Article(stringBuilder.toString())));
+                channel.basicPublish(EXCHANGER_NAME, comboTheme.toString(), null, SerializationUtils.serialize(new Article(comboTheme.toString(), stringBuilder.toString())));
                 System.out.println(" [x] Published an article with \"" + comboTheme.toString() + "\" theme");
-                // take a pause to write a new article
-                try {
-                    Thread.sleep(1000 + random.nextInt(4000));
-                } catch (InterruptedException _ignored) {
-                    Thread.currentThread().interrupt();
-                }
-            }
 
+                // take a pause to write a new article
+                Thread.sleep(500 + random.nextInt(1500));
+            }
         }
     }
 }
